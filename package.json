@@ -2,7 +2,7 @@
   "name": "dsh-plugin-feishu-bot",
   "version": "1.0.0",
   "description": "Feishu/Lark bridge for DSH — talk to your DSH sessions from a Feishu chat: cards, tables, file delivery, slash commands, skills, workspace/session switching, and human-in-the-loop questions and approvals.",
-  "author": "wangmengfan <wangmengfan@sthttech.com>",
+  "author": "wangmengfan",
   "license": "MIT",
   "homepage": "https://github.com/wang1078564969/dsh-plugin-feishu-bot#readme",
   "repository": {
