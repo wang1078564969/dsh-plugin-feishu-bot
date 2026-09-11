@@ -34,6 +34,7 @@ Everything the bot says inside the chat (cards, help, errors, session titles) is
 | Session switching | `/s` lists this chat's remembered sessions plus the other sessions in the workspace, and makes switching reversible. |
 | Human in the loop | `ask_user_question` and permission approvals become cards in the chat; answer with a number or free text. |
 | Model-facing tool | `feishu_bot` (13 actions) lets an agent control the bridge: status, logs, chat list, workspace/session switching, sending cards and files, configuration. |
+| Settings page | A **飞书机器人** section in DSH's settings, shipped inside this package (no build step): edits `config.json` — credentials, transport, default workspace and presets, reply behaviour. Preset labels use DSH's own wording. Secrets are never sent to the browser. |
 | Long connection | Outbound WebSocket with SDK auto-reconnect plus a supervised child process (restart backoff 15 s → 5 min) and a heartbeat line every 60 s. |
 
 ## Install

@@ -123,7 +123,33 @@
 
 | 改了什么 | 生效方式 |
 | --- | --- |
-| 任意字段（手写 `config.json`） | `feishu_bot action: restart`：重新读配置、重新校验凭据、重启长连接桥 |
-| `appId` / `appSecret` / `transport`（用工具改） | `configure` 会自己停掉旧桥并用新身份重启 |
-| 其他字段（用工具改） | `configure` 立即写入内存并保存，无需重启 |
+| 任意字段（手写 `config.json`） | 插件每 3 秒比对文件签名，改动被自动采纳，日志里留下 `config.json changed on disk — reloaded: …`；也可以 `feishu_bot action: restart` 立刻重来一遍 |
+| `appId` / `appSecret` / `transport` | 这三个通过**环境变量**传给桥接子进程，所以插件会重连长连接 |
+| 其他字段 | 立即写入内存并保存，下一条回复就按新设置走，长连接不断 |
 | `bridgeToken` | 不用管；缺失时自动生成并写回 |
+
+---
+
+## 六、在 GUI 里改（设置 → 飞书机器人）
+
+同一个文件也能在 DSH 的 **设置 → 飞书机器人** 里改。那一页是**随包发布的浏览器半边**（`lib/client.js`），装完插件就有，不需要额外配置，也不会因为重启 DSH 而消失。
+
+它覆盖的字段：
+
+| 分组 | 字段 |
+| --- | --- |
+| 凭据 | `appId`、`appSecret`（只显示「已设置」，**不回传明文**，留空＝不修改） |
+| 连接 | `transport`（ws / webhook / both） |
+| 会话 | `workspacePath`、`agentPreset`、`permissionPreset` |
+| 回复 | `groupRequireMention`、`replyStyle`、`acknowledge`、`cardHeader`、`replyMetrics` |
+
+Agent 预设与权限预设的下拉**文案逐字取自 DSH 自己**（`ui-agent-preset` / `ui-permission-presets` 的语言包），所以与产品里的叫法一致：标准模式 / PTC 模式 / 极简模式 / 创造模式，仅可查看 / 工作区内修改 / 完全权限。权限预设多一项 `跟随部署（留空）`——那是**本插件自己的语义**（不指定模式、沿用部署策略），DSH 的权限设置里没有这一项。
+
+**页面做不到的事**：
+
+- `bridgeToken` 既不能读也不能写——它由插件生成，任何外部来源都不该能改它；
+- **看不到密钥明文**，这是设计不是缺陷：接口只回答「设了没有」；
+- `permissionPreset` **不追溯已存在的会话**——权限模式在会话创建时读取，已绑定的聊天要等 `/new` 或 `/ws` 切换。
+
+**接口**：页面通过 `GET`/`POST /api/feishu-bot/config` 读写。这条路由注册在 DSH 的 connection 服务上，用的是 GUI 自己的浏览器 cookie 认证——**不是**裸 `webServer` 路由，那种路由不做认证，而这个接口会报告密钥是否已设置。
+

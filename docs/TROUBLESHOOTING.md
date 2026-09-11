@@ -352,6 +352,26 @@ dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot   # 装
 
 **已知未验证的一点**：把一个**正在运行**的 profile 行从旧路径直接改指到包，在运行中的进程里可能不生效（行不会重新激活），装载器的错误只出现在 DSH 终端。改完重启即可，不要在运行中反复改行名。
 
+## 设置页显示不出来 / 读不到配置
+
+设置里的「飞书机器人」这一页是**随包发布的浏览器半边**（`lib/client.js`，由 `package.json` 的 `dsh.client` 声明）。它要工作，两件事都得成立：
+
+| 检查 | 怎么看 |
+| --- | --- |
+| 浏览器半边被挂载 | 设置左栏有没有「飞书机器人」这一项。**没有** → `package.json` 的 `dsh.client.platform` 必须是 `"web"`，`exports` 必须有 `"./client"`，且装完要**重启 DSH**（客户端清单在启动时扫描） |
+| host 半边注册了路由 | `plugin.log` / DSH 终端里有没有 `the connection service is unavailable — the settings page will not load its configuration (the bot itself is unaffected)`。有 → 这个 profile 没装 web bundle，页面读不到配置（**聊天本身不受影响**） |
+
+页面报错时会直接显示出来（红框 + 重试），常见的两条：
+
+- `HTTP 401`：浏览器 cookie 过期。刷新页面重新登录即可。
+- `HTTP 404`：路由没注册上，看上面第二行。
+
+**页面里的密钥为什么永远是空的**：接口只回「是否已设置」，从不回传明文。这不是 bug；`appSecret` 留空保存＝不修改。
+
+**为什么页面不能改 `bridgeToken`**：它由插件生成，任何外部来源都不该能设置或清除它。接口会拒绝这个键。
+
+---
+
 ## 怎么升级到新版本
 
 git 依赖会被 pnpm 锁到一个**具体 commit**（`pnpm-lock.yaml` 里表现为 `codeload.github.com/…/tar.gz/<sha>`），所以「仓库推了新 commit」不等于「你装的是新的」：

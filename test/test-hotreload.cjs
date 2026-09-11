@@ -68,6 +68,11 @@ const sandbox = {
   statSync: fs.statSync,
   CONFIG_PATH: CONFIG_PATH,
   configSignatureSeen: '',
+  // The reload path bumps the change counter so the settings page can tell its
+  // draft is stale. Both live in bot.js; the sandbox needs them because it runs
+  // the real function.
+  configRevisionValue: 0,
+  bumpConfigRevision: function () { sandbox.configRevisionValue += 1 },
   // The supervisor state the reload path owns. Declared here because the real
   // ones are `let` bindings that live later in the file than the functions.
   config: { appId: 'cli_a', appSecret: 's1', transport: 'ws', cardHeader: true, bridgeToken: 'tok' },
@@ -166,6 +171,9 @@ async function main() {
   check('the new value is in memory', sandbox.config.cardHeader === false)
   check('the bridge was NOT restarted', sandbox.stopped === 0)
   check('the change is logged', sandbox.logs.join('\n').indexOf('cardHeader') !== -1, JSON.stringify(sandbox.logs))
+
+  console.log('\n[3b] a reload advances the revision the settings page reads')
+  check('the counter moved', sandbox.configRevisionValue > 0, String(sandbox.configRevisionValue))
 
   console.log('\n[4] appSecret alone forces a respawn')
 
