@@ -43,11 +43,13 @@ dsh plugin --profile web list | grep feishu
 
 | 原因 | 处置 |
 | --- | --- |
-| 包没装进 profile | `dsh plugin --profile web add dsh-plugin-feishu-bot` |
+| 包没装进 profile | `dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot` |
+| 安装报 `ERR_PNPM_IGNORED_BUILDS`（`Ignored build scripts: protobufjs@…`） | pnpm 10+ 默认拦下依赖的安装脚本，而 `add` 把「有一个新包被拦下」当成失败。在 profile 的 `pnpm-workspace.yaml` 里加 `allowBuilds: {protobufjs: false}`（若已有占位行 `protobufjs: set this to true or false` 就改成 `false`），再重跑同一条命令 |
 | 行被关掉了（profile 的 `cordis.patch.yml` 里有 `- id: feishu-bot` + `disabled: true`） | 去掉 `disabled: true`，重载或重启 DSH |
 | 入口文件被删 / 坏了 | 报错是响亮的：激活时抛出 `[feishu-bot] cannot … lib/…` 之类的错误并指明是哪个文件读不到，而不是静默不提供任何东西。重新安装包即可 |
 | `shell` 服务不可用 | `the shell service is unavailable; cannot run curl or the bridge`。这个插件依赖 POSIX shell（`curl` / `openssl` / `stat`），换一个有 shell 服务的 profile |
-| 没装 `@larksuiteoapi/node-sdk` | 属于安装不完整：`bridge not started: the Feishu SDK cannot be resolved from …`。重跑 `dsh plugin --profile <name> add dsh-plugin-feishu-bot` |
+| 没装 `@larksuiteoapi/node-sdk` | 属于安装不完整：`bridge not started: the Feishu SDK cannot be resolved from …`。重跑 `dsh plugin --profile <name> add github:wang1078564969/dsh-plugin-feishu-bot` |
+| 改了代码 / 仓库推了新 commit，但行为没变 | git 依赖锁在解析出来的那个 commit 上，见下面「怎么升级」 |
 
 ---
 
@@ -330,7 +332,7 @@ curl -s http://127.0.0.1:3080/feishu/events
 **升级步骤**
 
 ```bash
-dsh plugin --profile web add dsh-plugin-feishu-bot     # 装包 + 自动挂上 bundle 层
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot   # 装包 + 自动挂上 bundle 层
 # 然后重启 DSH
 ```
 
@@ -349,6 +351,24 @@ dsh plugin --profile web add dsh-plugin-feishu-bot     # 装包 + 自动挂上 b
 **如果重启后机器人没反应**，先看 `feishu_bot action: status`（工具都没有 = 行没挂上），再看 DSH 终端——装载器的报错只打在那里，不写进 `plugin.log`。回滚就是把手工的 `insert` 行改回旧路径、把包从 `dsh.profile.bundles` 里删掉。
 
 **已知未验证的一点**：把一个**正在运行**的 profile 行从旧路径直接改指到包，在运行中的进程里可能不生效（行不会重新激活），装载器的错误只出现在 DSH 终端。改完重启即可，不要在运行中反复改行名。
+
+## 怎么升级到新版本
+
+git 依赖会被 pnpm 锁到一个**具体 commit**（`pnpm-lock.yaml` 里表现为 `codeload.github.com/…/tar.gz/<sha>`），所以「仓库推了新 commit」不等于「你装的是新的」：
+
+```sh
+dsh plugin --profile web update dsh-plugin-feishu-bot    # 重新解析到 main 上最新的 commit
+dsh plugin --profile web list | grep feishu              # 确认已经变了
+# 然后重启 DSH（bundle 列表在启动时合成）
+```
+
+要固定到某个版本就写全 ref（tag 或 commit sha 都可以，实测 `#<sha>` 会原样写进 specifier）：
+
+```sh
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot#<sha>
+```
+
+自己改代码的场景用 `add link:/path/to/clone`——那是符号链接，改完文件即生效，不需要 update。
 
 ## 写完插件后 DSH 起不来：`cannot get property "xxx" without inject`
 
@@ -377,4 +397,4 @@ ctx.get('tools').register(t)  // 也可以，但那样拿不到就用不了
 1. `registerTool` 包在 try/catch 里——注册模型工具失败不该让 harness 起不来；聊天链路在那一刻其实已经跑起来了。
 2. 入口的 `apply` 对**加载**失败是吞掉并记日志的（`<数据目录>/load-report.txt`），因为一个聊天桥接没有资格让整个 harness 陪葬。
 
-另外一条与 inject 无关但同样致命：**别把"能不能解析某个依赖"写成闸门**。`lib/bot.js` 一开始用 `createRequire().resolve()` 探测飞书 SDK，解析失败就不启动桥接；结果主进程（在 `npm install` 之前启动的）解析失败，而桥接子进程自己解析完全正常——一道防错的检查制造了它本来要防的故障。现在它只是探测，只影响日志措辞。
+另外一条与 inject 无关但同样致命：**别把"能不能解析某个依赖"写成闸门**。`lib/bot.js` 一开始用 `createRequire().resolve()` 探测飞书 SDK，解析失败就不启动桥接；结果主进程（在依赖装完之前就已经启动了）解析失败，而桥接子进程自己解析完全正常——一道防错的检查制造了它本来要防的故障。现在它只是探测，只影响日志措辞。

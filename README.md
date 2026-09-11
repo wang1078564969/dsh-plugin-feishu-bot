@@ -38,17 +38,35 @@ Everything the bot says inside the chat (cards, help, errors, session titles) is
 
 ## Install
 
+Not on npm yet — install straight from GitHub, where the repository *is* the package:
+
 ```sh
-dsh plugin --profile web add dsh-plugin-feishu-bot
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot
 ```
 
-The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically — installing it *is* the installation. No hand-edited composition. The row id is `feishu-bot`.
+The package declares `dsh.bundle.patch`, so it joins the profile's bundle layer stack automatically — installing it *is* the installation. No hand-edited composition, no build step (the sources ship as plain ESM). The row id is `feishu-bot`; `dsh --profile web --dump-config` shows it.
+
+git dependencies are pinned to the commit that was resolved, so this is also how you upgrade:
+
+```sh
+dsh plugin --profile web update dsh-plugin-feishu-bot   # move to the newest commit on main
+dsh plugin --profile web add link:/path/to/dsh-plugin-feishu-bot   # or: a local clone, edits live
+```
 
 Uninstall:
 
 ```sh
 dsh plugin --profile web remove dsh-plugin-feishu-bot
 ```
+
+> **If the install stops on `ERR_PNPM_IGNORED_BUILDS`** (`Ignored build scripts: protobufjs@…`): your pnpm is 10+ and blocks install scripts by default, which `add` treats as a failure for a *new* package. `protobufjs` is an optional transitive dependency and needs no build script, so answer it once in the profile's `pnpm-workspace.yaml` and re-run the command:
+>
+> ```yaml
+> allowBuilds:
+>   protobufjs: false
+> ```
+>
+> A profile created by a `pnpm-workspace.yaml`-aware `dsh` may write the placeholder `protobufjs: set this to true or false` for you — replace it with `false`.
 
 To turn it off without uninstalling, add this to *your profile's own* `cordis.patch.yml` (that layer is applied after every bundle layer):
 

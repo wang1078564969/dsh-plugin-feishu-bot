@@ -38,17 +38,35 @@
 
 ## 安装
 
+还没发到 npm，**直接从 GitHub 装**——这个仓库本身就是包：
+
 ```sh
-dsh plugin --profile web add dsh-plugin-feishu-bot
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot
 ```
 
-这个包在 `package.json` 里声明了 `dsh.bundle.patch`，会被自动加进该 profile 的 bundle 层栈——**装完就是装完**，不用手工编辑任何 composition。行 id 是 `feishu-bot`。
+这个包在 `package.json` 里声明了 `dsh.bundle.patch`，会被自动加进该 profile 的 bundle 层栈——**装完就是装完**，不用手工编辑任何 composition，也没有构建步骤（源码就是最终产物，纯 ESM）。行 id 是 `feishu-bot`，用 `dsh --profile web --dump-config` 能看到它。
+
+git 依赖会被锁定到解析出来的那个 commit，所以升级也是同一条命令的另一种形式：
+
+```sh
+dsh plugin --profile web update dsh-plugin-feishu-bot   # 跟到 main 上最新的 commit
+dsh plugin --profile web add link:/path/to/dsh-plugin-feishu-bot   # 或者：本地克隆，改代码即时生效
+```
 
 卸载：
 
 ```sh
 dsh plugin --profile web remove dsh-plugin-feishu-bot
 ```
+
+> **如果安装报 `ERR_PNPM_IGNORED_BUILDS`**（`Ignored build scripts: protobufjs@…`）：pnpm 10+ 默认拦下依赖的安装脚本，而 `add` 把「有一个新包被拦」当成失败。`protobufjs` 是个可选传递依赖，本来也不需要跑构建脚本，所以在该 profile 的 `pnpm-workspace.yaml` 里回答一次，然后重跑那条命令：
+>
+> ```yaml
+> allowBuilds:
+>   protobufjs: false
+> ```
+>
+> 有些版本的 `dsh` 会替你写一行占位 `protobufjs: set this to true or false`，把它改成 `false` 即可。
 
 只想临时关掉、不卸载：在**你自己 profile 的** `cordis.patch.yml` 里加（这一层在所有 bundle 层之后应用）：
 

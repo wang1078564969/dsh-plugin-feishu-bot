@@ -85,22 +85,33 @@
 
 ## 6. 安装插件
 
+还没发到 npm，**从 GitHub 装**（这个仓库本身就是包）：
+
 ```sh
-dsh plugin --profile web add dsh-plugin-feishu-bot
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot
 ```
 
 这个包在 `package.json` 里声明了 `dsh.bundle.patch`，所以它会被自动加进该 profile 的 bundle 层栈——**装完就是装完**，不用手工编辑任何 composition。行 id 是 `feishu-bot`。
 
-**还没发布到 npm 时**，同一个命令接受任何 pnpm 能识别的来源，bundle 机制一样生效：
+同一个命令接受任何 pnpm 能识别的来源，bundle 机制一样生效：
 
 ```sh
-# 从 GitHub 装
-dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot
+# 固定到某个 tag / commit
+dsh plugin --profile web add github:wang1078564969/dsh-plugin-feishu-bot#<sha>
 # 从本地克隆装（改代码即时生效，适合自己改）
 dsh plugin --profile web add link:/path/to/dsh-plugin-feishu-bot
 ```
 
-`link:` 装法有个坑：pnpm **不会安装被链接目录自己的依赖**，所以要手动补一次，否则桥接起不来（日志会说 SDK 解析不到）：
+**如果报 `ERR_PNPM_IGNORED_BUILDS`**（`Ignored build scripts: protobufjs@…`）：pnpm 10+ 默认拦下依赖的安装脚本，而 `add` 把「有一个新包被拦下」当成失败。`protobufjs` 是可选传递依赖、本来不需要跑脚本，在 profile 的 `pnpm-workspace.yaml` 里回答一次再重跑即可：
+
+```yaml
+allowBuilds:
+  protobufjs: false
+```
+
+（若文件里已经是占位行 `protobufjs: set this to true or false`，改成 `false`。）
+
+`link:` 装法另有一个坑：pnpm **不会安装被链接目录自己的依赖**，所以要手动补一次，否则桥接起不来（日志会说 SDK 解析不到）：
 
 ```sh
 cd /path/to/dsh-plugin-feishu-bot && env -u npm_config_allow_scripts npm install --no-audit --no-fund
@@ -112,7 +123,7 @@ cd /path/to/dsh-plugin-feishu-bot && env -u npm_config_allow_scripts npm install
 dsh plugin --profile web remove dsh-plugin-feishu-bot
 ```
 
-装好后重启该 profile（或让 DSH 重载配置），插件激活时会自己创建数据目录。
+装好后重启该 profile（或让 DSH 重载配置），插件激活时会自己创建数据目录。升级见 [TROUBLESHOOTING.md 的「怎么升级到新版本」](TROUBLESHOOTING.md#怎么升级到新版本)。
 
 ---
 

@@ -1,11 +1,12 @@
 # This package's composition layer, applied when the package is installed into a
-# profile with `dsh plugin --profile <name> add dsh-plugin-feishu-bot`.
+# profile with
+#   dsh plugin --profile <name> add github:wang1078564969/dsh-plugin-feishu-bot
 #
 # WHY A BUNDLE. A package that declares `dsh.bundle.patch` joins the profile's
 # `dsh.profile.bundles` layer stack automatically, so installing the package is
 # the whole installation: no hand-edited composition, and `dsh plugin remove`
 # takes it back out. The path below is relative to THIS file, which keeps the
-# row inside the package wherever npm puts it.
+# row inside the package wherever pnpm (or npm) puts it.
 #
 # THE ID IS THE HANDLE. A user who wants to configure or disable this row does
 # it by id in their own profile `cordis.patch.yml`, which is applied after every
