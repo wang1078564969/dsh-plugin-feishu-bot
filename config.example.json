@@ -1,0 +1,21 @@
+{
+  "appId": "cli_xxxxxxxxxxxxxxxx",
+  "appSecret": "REPLACE_WITH_THE_APP_SECRET",
+  "verificationToken": "",
+  "encryptKey": "",
+  "transport": "ws",
+  "workspacePath": "/home/user/project",
+  "agentPreset": "standard",
+  "permissionPreset": "",
+  "groupRequireMention": true,
+  "replyStyle": "card",
+  "acknowledge": true,
+  "useReply": true,
+  "cardHeader": true,
+  "replyMetrics": true,
+  "maxReplyChars": 6000,
+  "timeoutMs": 300000,
+  "allowedChatIds": [],
+  "blockedUserIds": [],
+  "bridgeToken": ""
+}

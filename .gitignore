@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Local install artifacts
+pnpm-lock.yaml
+package-lock.json
+
+# Runtime data never belongs in the package: the bot keeps its state under
+# $DSH_HOME/feishu-bot (see README). These patterns are here so that a copy of
+# it does not get committed by accident.
+config.json
+state.json
+*.log
+
+# Test scratch: every suite regenerates its harness here on each run.
+test/.scratch/
